@@ -1,6 +1,5 @@
-includes:
-	- temp/phpstan/vendor/phpstan/phpstan-nette/extension.neon
-	- temp/phpstan/vendor/phpstan/phpstan-nette/rules.neon
-
 parameters:
-    ignoreErrors:
+	ignoreErrors:
+		# We will replace it once, for sure
+		- '#Fetching class constant .+ of deprecated class Doctrine\\ORM\\Tools\\Console\\Command\\(GenerateEntities|GenerateRepositories)Command.+#'
+		- '#Fetching class constant .+ of deprecated class Doctrine\\ORM\\Proxy\\Proxy.+#'

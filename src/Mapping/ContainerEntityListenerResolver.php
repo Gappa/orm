@@ -3,8 +3,8 @@
 namespace Nettrine\ORM\Mapping;
 
 use Doctrine\ORM\Mapping\EntityListenerResolver;
-use InvalidArgumentException;
 use Nette\DI\Container;
+use Nettrine\ORM\Exception\Logical\InvalidArgumentException;
 
 class ContainerEntityListenerResolver implements EntityListenerResolver
 {
@@ -50,9 +50,10 @@ class ContainerEntityListenerResolver implements EntityListenerResolver
 	}
 
 	/**
-	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingParameterTypeHint
 	 * @param string $className
-	 * @return object|mixed
+	 * @return object
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingParameterTypeHint
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingReturnTypeHint
 	 */
 	public function resolve($className)
 	{

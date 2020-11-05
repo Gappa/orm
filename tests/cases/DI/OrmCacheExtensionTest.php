@@ -1,46 +1,64 @@
 <?php declare(strict_types = 1);
 
-namespace Tests\Nettrine\ORM\Cases\DI;
+namespace Tests\Cases\DI;
 
-use Doctrine\Common\Cache\FilesystemCache;
+use Doctrine\Common\Cache\ApcuCache;
+use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\PhpFileCache;
+use Doctrine\Common\Cache\VoidCache;
 use Nette\DI\Compiler;
-use Nette\DI\Container;
-use Nette\DI\ContainerLoader;
-use Nettrine\DBAL\DI\DbalExtension;
-use Nettrine\ORM\DI\OrmAnnotationsExtension;
 use Nettrine\ORM\DI\OrmCacheExtension;
-use Nettrine\ORM\DI\OrmExtension;
 use Nettrine\ORM\EntityManagerDecorator;
-use Tests\Nettrine\ORM\Cases\TestCase;
+use Tests\Fixtures\Dummy\DummyCacheConfigurationFactory;
+use Tests\Toolkit\Nette\ContainerBuilder;
+use Tests\Toolkit\TestCase;
 
 final class OrmCacheExtensionTest extends TestCase
 {
 
-	public function testCacheDrivers(): void
+	public function testAutowiredCacheDrivers(): void
 	{
-		$loader = new ContainerLoader(TEMP_PATH, true);
-		$class = $loader->load(function (Compiler $compiler): void {
-			$compiler->addExtension('dbal', new DbalExtension());
-			$compiler->addExtension('orm', new OrmExtension());
-			$compiler->addExtension('orm.annotations', new OrmAnnotationsExtension());
-			$compiler->addExtension('orm.cache', new OrmCacheExtension());
-			$compiler->addConfig([
-				'parameters' => [
-					'tempDir' => TEMP_PATH,
-					'appDir' => __DIR__,
-				],
-			]);
-		}, self::class . __METHOD__);
+		$container = ContainerBuilder::of()
+			->withDefaults()
+			->withCompiler(function (Compiler $compiler): void {
+				$compiler->addExtension('nettrine.orm.cache', new OrmCacheExtension());
+			})
+			->build();
 
-		/** @var Container $container */
-		$container = new $class();
 		/** @var EntityManagerDecorator $em */
 		$em = $container->getByType(EntityManagerDecorator::class);
 
-		self::assertInstanceOf(FilesystemCache::class, $em->getConfiguration()->getHydrationCacheImpl());
-		self::assertInstanceOf(FilesystemCache::class, $em->getConfiguration()->getMetadataCacheImpl());
-		self::assertInstanceOf(FilesystemCache::class, $em->getConfiguration()->getQueryCacheImpl());
-		self::assertInstanceOf(FilesystemCache::class, $em->getConfiguration()->getResultCacheImpl());
+		$this->assertInstanceOf(PhpFileCache::class, $em->getConfiguration()->getHydrationCacheImpl());
+		$this->assertInstanceOf(PhpFileCache::class, $em->getConfiguration()->getMetadataCacheImpl());
+		$this->assertInstanceOf(PhpFileCache::class, $em->getConfiguration()->getQueryCacheImpl());
+		$this->assertInstanceOf(PhpFileCache::class, $em->getConfiguration()->getResultCacheImpl());
+	}
+
+	public function testProvidedCacheDrivers(): void
+	{
+		$container = ContainerBuilder::of()
+			->withDefaults()
+			->withCompiler(function (Compiler $compiler): void {
+				$compiler->addExtension('nettrine.orm.cache', new OrmCacheExtension());
+				$compiler->addConfig([
+					'nettrine.orm.cache' => [
+						'defaultDriver' => ArrayCache::class,
+						'hydrationCache' => VoidCache::class,
+						'metadataCache' => null,
+						'queryCache' => ApcuCache::class,
+						'secondLevelCache' => [DummyCacheConfigurationFactory::class, 'create'],
+					],
+				]);
+			})
+			->build();
+
+		/** @var EntityManagerDecorator $em */
+		$em = $container->getByType(EntityManagerDecorator::class);
+
+		$this->assertInstanceOf(VoidCache::class, $em->getConfiguration()->getHydrationCacheImpl());
+		$this->assertInstanceOf(ArrayCache::class, $em->getConfiguration()->getMetadataCacheImpl());
+		$this->assertInstanceOf(ApcuCache::class, $em->getConfiguration()->getQueryCacheImpl());
+		$this->assertInstanceOf(ArrayCache::class, $em->getConfiguration()->getResultCacheImpl());
 	}
 
 }

@@ -2,11 +2,12 @@
 
 namespace Nettrine\ORM;
 
-use Doctrine\Common\Persistence\AbstractManagerRegistry;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\Persistence\AbstractManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
 use Nette\DI\Container;
 
 class ManagerRegistry extends AbstractManagerRegistry
@@ -29,8 +30,9 @@ class ManagerRegistry extends AbstractManagerRegistry
 
 	/**
 	 * @param string $name
-	 * @return object|mixed
+	 * @return object&ObjectManager
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingParameterTypeHint
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.TypeHintDeclaration.MissingReturnTypeHint
 	 */
 	protected function getService($name)
 	{
@@ -57,6 +59,7 @@ class ManagerRegistry extends AbstractManagerRegistry
 			try {
 				/** @var EntityManagerInterface $entityManager */
 				$entityManager = $this->getManager($name);
+
 				return $entityManager->getConfiguration()->getEntityNamespace($alias);
 			} catch (ORMException $e) {
 				// Ignore
